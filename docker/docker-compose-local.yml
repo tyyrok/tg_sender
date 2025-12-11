@@ -1,0 +1,47 @@
+services:
+  tg_sender:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: always
+    container_name: tg_sender
+    hostname: tg_sender
+    env_file:
+      - ../.env
+    command: uv run src/main.py
+    networks:
+      - test-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes --appendfsync everysec --save 900 1 --save 300 10 --save 60 10000
+    networks:
+      - test-network
+    volumes:
+      - redis_data:/data
+
+  tg_sender_api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: always
+    container_name: tg_sender_api
+    hostname: tg_sender_api
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - ../.env
+    command: bash -c "cd src/api && uvicorn main:app --host 0.0.0.0"
+    networks:
+      - test-network
+
+
+networks:
+  test-network:
+    driver: bridge
+
+
+volumes:
+  redis_data: {}
