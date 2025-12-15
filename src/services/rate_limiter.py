@@ -31,16 +31,20 @@ class TelegramRateLimiter:
     def __init__(self) -> None:
         self.lock = asyncio.Lock()
 
-    async def acquire_lock(self, chat_id: int | str) -> bool:
+    async def acquire_lock(
+        self, chat_id: int | str, bot_id: int | str
+    ) -> bool:
         if str(chat_id).startswith("-"):
             return await self._acquire_group_lock(chat_id=chat_id)
         return await self._acquire_lock(chat_id=chat_id)
 
-    async def _acquire_lock(self, chat_id: int | str) -> bool:
+    async def _acquire_lock(
+        self, chat_id: int | str, bot_id: int | str
+    ) -> bool:
         await global_limiter.acquire_lock()
         async with self.lock:
             now = time.monotonic()
-            redis_key = f"{redis_settings.CHAT_SEND_PREFIX}{chat_id}"
+            redis_key = f"{redis_settings.CHAT_SEND_PREFIX}{chat_id}:{bot_id}"
             try:
                 if last_chat_send := await get_from_redis(
                     redis_conn=redis_conn, key=redis_key
@@ -62,11 +66,13 @@ class TelegramRateLimiter:
                 raise
         return True
 
-    async def acquire_edit_lock(self, chat_id: int | str) -> bool:
+    async def acquire_edit_lock(
+        self, chat_id: int | str, bot_id: int | str
+    ) -> bool:
         await global_limiter.acquire_lock()
         async with self.lock:
             now = time.monotonic()
-            redis_key = f"{redis_settings.CHAT_EDIT_PREFIX}{chat_id}"
+            redis_key = f"{redis_settings.CHAT_EDIT_PREFIX}{chat_id}:{bot_id}"
             try:
                 if last_chat_send := await get_from_redis(
                     redis_conn=redis_conn, key=redis_key
@@ -88,11 +94,13 @@ class TelegramRateLimiter:
                 raise
         return True
 
-    async def _acquire_group_lock(self, chat_id: int | str) -> bool:
+    async def _acquire_group_lock(
+        self, chat_id: int | str, bot_id: int | str
+    ) -> bool:
         await global_limiter.acquire_lock()
         async with self.lock:
             now = time.monotonic()
-            redis_key = f"{redis_settings.GROUP_SEND_PREFIX}{chat_id}"
+            redis_key = f"{redis_settings.GROUP_SEND_PREFIX}{chat_id}:{bot_id}"
             try:
                 if last_chat_send := await get_from_redis(
                     redis_conn=redis_conn, key=redis_key

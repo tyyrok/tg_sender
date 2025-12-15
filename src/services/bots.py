@@ -18,7 +18,7 @@ async def send_msg(
 ) -> None:
     messages = split_message(msg.data.text)
     for text_msg in messages:
-        await rate_limiter.acquire_lock(msg.data.chat_id)
+        await rate_limiter.acquire_lock(msg.data.chat_id, bot.id)
         _, sent_msg_id = await send_message(
             bot=bot,
             chat_id=msg.data.chat_id,
@@ -52,7 +52,7 @@ async def edit_msg(
     bot: Bot,
     logs_stream: Optional[str] = None,
 ) -> None:
-    await rate_limiter.acquire_edit_lock(msg.data.chat_id)
+    await rate_limiter.acquire_edit_lock(msg.data.chat_id, bot.id)
     res = await edit_message(
         bot=bot,
         chat_id=msg.data.chat_id,
@@ -84,7 +84,7 @@ async def del_msg(
     bot: Bot,
     logs_stream: Optional[str] = None,
 ) -> None:
-    await rate_limiter.acquire_lock(msg.data.chat_id)
+    await rate_limiter.acquire_lock(msg.data.chat_id, bot.id)
     if await delete_message(
         bot=bot, chat_id=msg.data.chat_id, message_id=msg.data.message_id
     ):
