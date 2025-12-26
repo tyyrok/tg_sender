@@ -6,7 +6,7 @@ from utils.redis import redis_conn
 
 
 async def send_to_queueu(
-    msg: Message | dict,
+    msg: Message | LogMessage | dict,
     stream_name: str,
     w_raise: bool | None = False,
 ) -> None:
